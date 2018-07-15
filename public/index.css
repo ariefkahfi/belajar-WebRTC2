@@ -1,0 +1,4 @@
+#videoContainerEl {
+    display: flex;
+    flex-direction: column;
+}

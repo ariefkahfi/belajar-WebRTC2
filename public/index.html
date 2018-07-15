@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Index Page</title>
+    <link rel="stylesheet" href="index.css"/>
+</head>
+<body>
+    <h1>WebRTC - onetoone - createroom</h1>
+    <div id="roomDescEl"></div>
+    <div id="statusEl"></div>
+    <div id="listOfClientsEl"></div>
+    <div>
+        <input type="text" id="roomNameEl" oninput="onInput(this)"/>
+        <button id="createBtnEl" onclick="onCreateRoom()">Create / Join Room</button>
+        <br/>
+        <button id="startBtnEl" onclick="onStart()" disabled>Start</button>
+        <br/>
+        <button id="hangUpBtnEl" onclick="onHangUp()" disabled>Hang Up</button>
+    </div>
+
+    <div id="videoContainerEl">
+        <video autoplay id="localVidEl"></video>
+        <video autoplay id="remoteVidEl"></video>
+    </div>
+
+
+
+</body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.slim.js"></script>
+    <script src="index.js"></script>
+</html>
