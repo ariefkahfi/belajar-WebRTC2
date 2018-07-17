@@ -47,9 +47,26 @@ function handleIceCandidate(ev){
 }
 function handleSignallingStateChange(ev){
     console.log('handleSignallingStateChange called::')
+    if(pConn){
+        if(pConn.signalingState === 'closed'){
+            closeVideoCall()
+            socket.emit('leave_room',{
+                roomName
+            })
+        }
+    }
 }
 function handleConnectionStateChange(ev){
     console.log('handleConnectionStateChange called::')
+    if(pConn){
+        if(pConn.iceConnectionState === 'disconnected' 
+        || pConn.iceConnectionState === 'closed'){
+            closeVideoCall()
+            socket.emit('leave_room',{
+                roomName
+            })
+        }
+    }
 }
 
 
