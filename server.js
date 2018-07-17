@@ -26,6 +26,9 @@ io.on('connection',socket=>{
     socket.on('leave_room',({roomName})=>{
         socket.leave(roomName).emit('on_leave_room')
     })
+    socket.on('my_hang_up',({roomName})=>{
+        socket.broadcast.to(roomName).emit('my_hang_up')
+    })
     socket.on('hang_up',({roomName})=>{
         socket.broadcast.to(roomName).emit('hang_up')
     })
@@ -39,6 +42,7 @@ io.on('connection',socket=>{
         })
     })
     socket.on('on_ice_candidate',({roomName , candidate})=>{
+        console.log('sending ice_candidate...')
         socket.broadcast.to(roomName).emit('on_ice_candidate',candidate)
     })
     socket.on('on_answer',({roomName , sdp})=>{

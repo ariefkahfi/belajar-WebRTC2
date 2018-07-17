@@ -15,6 +15,8 @@ let startBtnEl = document.getElementById('startBtnEl')
 let statusEl = document.getElementById('statusEl')
 let hangUpBtnEl = document.getElementById('hangUpBtnEl')
 let listOfClientsEl = document.getElementById('listOfClientsEl')
+let closeMyCallEl = document.getElementById('closeMyCallEl')
+closeMyCallEl.style.display = 'none'
 
 
 function onInput(ev){
@@ -47,33 +49,73 @@ function handleIceCandidate(ev){
 }
 function handleSignallingStateChange(ev){
     console.log('handleSignallingStateChange called::')
-    if(pConn){
-        if(pConn.signalingState === 'closed'){
-            closeVideoCall()
-            socket.emit('leave_room',{
-                roomName
-            })
-        }
-    }
+    // if(pConn){
+        // if(pConn.signalingState === 'closed'){
+            // closeVideoCall()
+            // socket.emit('leave_room',{
+                // roomName
+            // })
+        // }
+    // }
 }
 function handleConnectionStateChange(ev){
     console.log('handleConnectionStateChange called::')
     if(pConn){
-        if(pConn.iceConnectionState === 'disconnected' 
-        || pConn.iceConnectionState === 'closed'){
-            closeVideoCall()
-            socket.emit('leave_room',{
-                roomName
-            })
+        console.log('pConn state::',pConn.iceConnectionState)
+        if(pConn.iceConnectionState === 'failed'){
+            console.log('failed...')
         }
     }
+    // if(pConn){
+        // if(pConn.iceConnectionState === 'disconnected' 
+        // || pConn.iceConnectionState === 'closed'){
+            // closeVideoCall()
+            // socket.emit('leave_room',{
+                // roomName
+            // })
+        // }
+    // }
 }
 
 
 function createPeerConnection(){
     let rtcConn = new RTCPeerConnection({
         iceServers:[
-            {urls:'stun:stun.l.google.com:19302'}
+            {
+                urls:'stun:stun.l.google.com:19302'
+            },
+            {
+                urls: 'stun:stun1.l.google.com:19302',
+            },
+            {
+                urls:'stun:stun2.l.google.com:19302'
+            }
+            ,
+            {
+                urls: 'turn:numb.viagenie.ca',
+                credential: 'muazkh',
+                username: 'webrtc@live.com'
+            },
+            {
+                urls: 'turn:192.158.29.39:3478?transport=udp',
+                credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                username: '28224511:1379330808'
+            },
+            {
+                urls: 'turn:192.158.29.39:3478?transport=tcp',
+                credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+                username: '28224511:1379330808'
+            },
+            {
+                urls: 'turn:turn.bistri.com:80',
+                credential: 'homeo',
+                username: 'homeo'
+             },
+             {
+                urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
+                credential: 'webrtc',
+                username: 'webrtc'
+            }
         ]
     })
     rtcConn.onicecandidate = handleIceCandidate
@@ -119,6 +161,23 @@ socket.on('on_ice_candidate',candidate=>{
 socket.on('on_answer',sdp=>{
     console.log('on_answer called::')
     pConn.setRemoteDescription(new RTCSessionDescription(sdp))
+        .catch(_=>{
+            console.error('error on_answer setRemote::')
+            pConn.createOffer({iceRestart:true})
+                .then(sdp=>{
+                    console.log('pConn::failed sdp::','get new sdp')
+                    return pConn.setLocalDescription(sdp)
+                })
+                .then(_=>{
+                    socket.emit('my_sdp_is',{
+                        roomName,
+                        sdp:pConn.localDescription
+                    })
+                })
+                .catch(err=>{
+                    console.error('pConn::failed error::',err)
+                })
+        })
     statusEl.innerHTML = ``    
 })
 
@@ -160,6 +219,7 @@ function onHangUp(){
 
 
 socket.on('on_leave_room',_=>{
+    console.log('on_leave_room called::')
     roomName = null
     roomDescEl.innerHTML = ``
     listOfClientsEl.innerHTML = ``
@@ -171,6 +231,31 @@ socket.on('hang_up',_=>{
         roomName
     })
 })
+
+
+socket.on('my_hang_up',_=>{
+    if(pConn){
+        if (remoteVidEl.srcObject) {
+            remoteVidEl.srcObject.getTracks().forEach(track => track.stop());
+            remoteVidEl.srcObject = null;
+        }
+    }
+})
+
+function onCloseMyCall(){
+    let aRoomName = roomName
+    closeVideoCall()
+    socket.emit('leave_room',{
+        roomName
+    })
+    socket.emit('on_new_client',{
+        roomName:aRoomName
+    })
+    socket.emit('my_hang_up',{
+        roomName:aRoomName
+    })
+    closeMyCallEl.style.display = 'none'
+}
 
 function closeVideoCall(){
     if(pConn){
@@ -251,6 +336,7 @@ socket.on('join_room',({code , data})=>{
             socket.emit('ask_sdp',{
                 roomName
             })
+            closeMyCallEl.style.display = 'inline-block'
         break;
     }
     socket.emit('on_new_client',{roomName})
